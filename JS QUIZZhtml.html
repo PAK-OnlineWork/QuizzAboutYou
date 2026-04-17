@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Maker + Share</title>
+
+<style>
+body { font-family: Arial; background:#4facfe; margin:0; padding:10px; }
+.container { background:#fff; max-width:650px; margin:auto; padding:15px; border-radius:12px; }
+h2 { text-align:center; }
+
+input { width:100%; padding:8px; margin-top:5px; border-radius:6px; border:1px solid #ccc; }
+
+button {
+  width:100%; padding:12px; margin-top:10px;
+  background:#00c6ff; color:#fff; border:none; border-radius:8px;
+}
+
+.option { background:#eee; padding:8px; margin-top:6px; border-radius:8px; cursor:pointer; }
+.option:hover { background:#dbeafe; }
+
+.linkBox { background:#eee; padding:10px; margin-top:10px; word-break:break-all; }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Quiz Maker</h2>
+
+<div id="builder"></div>
+
+<button onclick="generateLink()">Generate Share Link</button>
+
+<div id="linkBox" class="linkBox"></div>
+
+<hr>
+
+<div id="quiz"></div>
+<div id="result"></div>
+
+</div>
+
+<script>
+
+// CREATE 20 QUESTIONS INPUT
+for(let i=1;i<=20;i++){
+document.getElementById("builder").innerHTML += `
+<p>Q${i}</p>
+<input placeholder="Question ${i}" id="q${i}">
+<input placeholder="Option A" id="a${i}">
+<input placeholder="Option B" id="b${i}">
+<input placeholder="Option C" id="c${i}">
+<input placeholder="Option D" id="d${i}">
+<input placeholder="Correct Answer (A/B/C/D)" id="ans${i}">
+<hr>`;
+}
+
+// GENERATE SHARE LINK
+function generateLink(){
+let data = [];
+
+for(let i=1;i<=20;i++){
+data.push({
+q: document.getElementById("q"+i).value,
+a: document.getElementById("a"+i).value,
+b: document.getElementById("b"+i).value,
+c: document.getElementById("c"+i).value,
+d: document.getElementById("d"+i).value,
+ans: document.getElementById("ans"+i).value.toUpperCase()
+});
+}
+
+// encode data
+let encoded = btoa(JSON.stringify(data));
+
+// create link
+let link = location.href.split("?")[0] + "?quiz=" + encoded;
+
+document.getElementById("linkBox").innerText = link;
+}
+
+// LOAD QUIZ FROM LINK
+function loadQuiz(){
+let params = new URLSearchParams(window.location.search);
+let quizData = params.get("quiz");
+
+if(!quizData) return;
+
+let data = JSON.parse(atob(quizData));
+
+let html = "<h2>Play Quiz</h2><form onsubmit='return checkScore()'>";
+
+data.forEach((q,i)=>{
+html += `<p><b>${i+1}. ${q.q}</b></p>`;
+
+["a","b","c","d"].forEach(opt=>{
+html += `
+<label class="option">
+<input type="radio" name="q${i}" value="${opt}">
+${q[opt]}
+</label>`;
+});
+});
+
+html += `<button type="submit">Submit</button></form>`;
+
+document.getElementById("quiz").innerHTML = html;
+
+// save globally
+window.quizData = data;
+}
+
+// SCORE SYSTEM
+function checkScore(){
+let score = 0;
+
+window.quizData.forEach((q,i)=>{
+let selected = document.querySelector(`input[name="q${i}"]:checked`);
+if(selected && selected.value === q.ans.toLowerCase()){
+score++;
+}
+});
+
+document.getElementById("result").innerHTML =
+`🔥 Score: ${score}/20`;
+
+return false;
+}
+
+// AUTO LOAD
+loadQuiz();
+
+</script>
+
+</body>
+</html>
